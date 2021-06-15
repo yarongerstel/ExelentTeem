@@ -2,9 +2,12 @@ from tinydb import TinyDB, Query, table
 import time
 from dataclasses import dataclass
 from tinydb.operations import increment
+import uuid
 
 DB_PATH = r'C:\Users\USER001\PycharmProjects\ExelentTeem\targil_8\DB.json'
+REPUBLISH_DP = r'C:\Users\USER001\PycharmProjects\ExelentTeem\targil_8\republish.json'
 users_table = TinyDB(DB_PATH)
+republish_table = TinyDB(REPUBLISH_DP)
 
 
 @dataclass
@@ -13,7 +16,14 @@ class UserDetails:
     user_name: str
     due_date: time
     insight: str
-    count: int = 1
+    republish: int = 0
+
+@dataclass
+class RepublishData:
+    id: str
+    id_insigh: str
+    user_republished:str
+    due_date: time
 
 
 class UserDetailsWrapper:
@@ -37,7 +47,7 @@ class UserDetailsWrapper:
         :param insight:
         :return:
         """
-        users_table.insert({"id": user_id, "user_name": name, "due_date": date, "insight": insight, "count": 1})
+        users_table.insert({"id": user_id, "user_name": name, "due_date": date, "insight": insight, "republish": 0})
 
     @classmethod
     def get_all_users(cls):
@@ -51,8 +61,8 @@ class UserDetailsWrapper:
         :param user_name: how did that
         """
         if UserDetailsWrapper.get_by_id(user_id):
-            users_table.update(increment('count'), Query().id.matches(user_id))
-            users_table.upsert({'due_date': time.time(), 'user_name': user_name}, Query().id.matches(user_id))
+            users_table.update(increment('republish'), Query().id.matches(user_id))
+            republish_table.insert({'id':str(uuid.uuid4()),'id_insigh':user_id ,'user_republished': user_name,'due_date': time.time()})
         else:
             raise Exception('User dont exists')
 
@@ -66,7 +76,7 @@ class UserDetailsWrapper:
         max_id = ""
         max_count = 0
         for i in all_user:  # check the max count number
-            if i["count"] > max_count:
-                max_count = i["count"]
+            if i["republish"] > max_count:
+                max_count = i["republish"]
                 max_id = i['id']
         return UserDetailsWrapper.get_by_id(max_id)
